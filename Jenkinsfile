@@ -1,52 +1,20 @@
 pipeline {
   agent any
 
-  environment {
-    APP_NAME = 'vote-app'
-    DEPLOY_ENV = 'staging'
-  }
-
   stages {
-    stage('Build') {
+    stage('Build & Deploy') {
       steps {
-        dir('vote') { // 👈 change this to your actual subfolder name
-          echo '🔧 Installing dependencies...'
-          sh 'npm install'
-        }
-      }
-    }
-
-    stage('Test') {
-      steps {
-        dir('vote') {
-          echo '🧪 Running tests...'
-          sh 'npm test'
-        }
-      }
-    }
-
-    stage('Deploy') {
-      steps {
-        dir('vote') {
-          script {
-            if (fileExists('deploy.sh')) {
-              echo '🚀 Deploying application...'
-              sh './deploy.sh'
-            } else {
-              echo '⚠️ deploy.sh not found, skipping deploy.'
-            }
-          }
-        }
+        sh 'docker-compose up -d --build'
       }
     }
   }
 
   post {
     success {
-      echo '✅ Build and deploy successful!'
+      echo '✅ Full stack deployed via Docker Compose!'
     }
     failure {
-      echo '❌ Build failed. Check logs for details.'
+      echo '❌ Deployment failed. Check logs.'
     }
   }
 }
