@@ -9,9 +9,12 @@ pipeline {
 
   stages {
     stage('Build Docker Image') {
+      options {
+        timeout(time: 10, unit: 'MINUTES')
+      }
       steps {
         dir('vote') {
-          sh 'docker build -t $IMAGE_NAME .'
+          sh 'docker build --network=host -t $IMAGE_NAME .'
         }
       }
     }
