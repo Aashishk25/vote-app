@@ -9,26 +9,32 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-        echo '🔧 Installing dependencies...'
-        sh 'npm install'
+        dir('vote') { // 👈 change this to your actual subfolder name
+          echo '🔧 Installing dependencies...'
+          sh 'npm install'
+        }
       }
     }
 
     stage('Test') {
       steps {
-        echo '🧪 Running tests...'
-        sh 'npm test'
+        dir('vote') {
+          echo '🧪 Running tests...'
+          sh 'npm test'
+        }
       }
     }
 
     stage('Deploy') {
       steps {
-        script {
-          if (fileExists('deploy.sh')) {
-            echo '🚀 Deploying application...'
-            sh './deploy.sh'
-          } else {
-            echo '⚠️ deploy.sh not found, skipping deploy.'
+        dir('vote') {
+          script {
+            if (fileExists('deploy.sh')) {
+              echo '🚀 Deploying application...'
+              sh './deploy.sh'
+            } else {
+              echo '⚠️ deploy.sh not found, skipping deploy.'
+            }
           }
         }
       }
