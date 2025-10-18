@@ -8,12 +8,6 @@ pipeline {
   }
 
   stages {
-    stage('Checkout') {
-      steps {
-        git url: 'https://github.com/your-org/vote-app.git', branch: 'main'
-      }
-    }
-
     stage('Build Docker Image') {
       steps {
         dir('vote') {
@@ -28,6 +22,12 @@ pipeline {
           docker rm -f $CONTAINER_NAME || true
           docker run -d --name $CONTAINER_NAME -p $PORT:80 $IMAGE_NAME
         '''
+      }
+    }
+
+    stage('Health Check') {
+      steps {
+        sh 'curl -f http://localhost:$PORT || exit 1'
       }
     }
   }
