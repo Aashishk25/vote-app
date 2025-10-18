@@ -1,20 +1,34 @@
 pipeline {
   agent any
 
-  stages {
-    stage('Build & Deploy') {
-      steps {
-        sh 'docker-compose up -d --build'
-      }
-    }
+  environment {
+    IMAGE_NAME = "vote-app"
+    CONTAINER_NAME = "vote-app"
+    PORT = "5000"
   }
 
-  post {
-    success {
-      echo '✅ Full stack deployed via Docker Compose!'
+  stages {
+    stage('Checkout') {
+      steps {
+        git url: 'https://github.com/your-org/vote-app.git', branch: 'main'
+      }
     }
-    failure {
-      echo '❌ Deployment failed. Check logs.'
+
+    stage('Build Docker Image') {
+      steps {
+        dir('vote') {
+          sh 'docker build -t $IMAGE_NAME .'
+        }
+      }
+    }
+
+    stage('Deploy Container') {
+      steps {
+        sh '''
+          docker rm -f $CONTAINER_NAME || true
+          docker run -d --name $CONTAINER_NAME -p $PORT:80 $IMAGE_NAME
+        '''
+      }
     }
   }
 }
