@@ -1,28 +1,36 @@
 pipeline {
   agent any
 
-  stages {
-    stage('Checkout') {
-      steps {
-        git url: 'https://github.com/Aashishk25/vote-app.git', branch: 'main'
-      }
-    }
+  environment {
+    APP_NAME = 'vote-app'
+    DEPLOY_ENV = 'staging'
+  }
 
+  stages {
     stage('Build') {
       steps {
+        echo '🔧 Installing dependencies...'
         sh 'npm install'
       }
     }
 
     stage('Test') {
       steps {
+        echo '🧪 Running tests...'
         sh 'npm test'
       }
     }
 
     stage('Deploy') {
       steps {
-        sh './deploy.sh'
+        script {
+          if (fileExists('deploy.sh')) {
+            echo '🚀 Deploying application...'
+            sh './deploy.sh'
+          } else {
+            echo '⚠️ deploy.sh not found, skipping deploy.'
+          }
+        }
       }
     }
   }
@@ -32,7 +40,7 @@ pipeline {
       echo '✅ Build and deploy successful!'
     }
     failure {
-      echo '❌ Build failed. Check logs.'
+      echo '❌ Build failed. Check logs for details.'
     }
   }
 }
