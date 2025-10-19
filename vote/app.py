@@ -52,6 +52,11 @@ def hello():
     resp.set_cookie('voter_id', voter_id)
     return resp
 
+@vote_app.route("/health", methods=["GET"])
+def health():
+    return "OK", 200
+
+
 # Wrap the app under /app for ALB routing
 application = DispatcherMiddleware(Flask(__name__), {
     '/app': vote_app
