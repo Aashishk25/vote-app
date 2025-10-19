@@ -2,15 +2,18 @@ pipeline {
   agent any
 
   environment {
-    IMAGE_NAME = "vote-app"
-    ECR_REPO = "594165872407.dkr.ecr.us-east-1.amazonaws.com/vote-app"
-    CONTAINER_NAME = "vote-app"
-    PORT = "5000"
-    APP_HOST = "ip-10-101-3-153"
-    AWS_REGION = "us-east-1"
+    IMAGE_NAME = '594165872407.dkr.ecr.us-east-1.amazonaws.com/vote-app:latest'
+    CONTAINER_NAME = 'vote-app'
+    APP_HOST = 'ubuntu@10.101.3.153'
   }
 
   stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
     stage('Build Docker Image') {
       steps {
         dir('vote') {
@@ -19,27 +22,32 @@ pipeline {
       }
     }
 
-    stage('Tag and Push to ECR') {
+    stage('Login to AWS ECR') {
       steps {
         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
           sh '''
-            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
-            docker tag $IMAGE_NAME $ECR_REPO:latest
-            docker push $ECR_REPO:latest
+            aws ecr get-login-password --region us-east-1 | \
+            docker login --username AWS --password-stdin 594165872407.dkr.ecr.us-east-1.amazonaws.com
           '''
         }
       }
     }
 
+    stage('Push to ECR') {
+      steps {
+        sh 'docker push $IMAGE_NAME'
+      }
+    }
+
     stage('Deploy to App Host') {
       steps {
-        sshagent(credentials: ['app-host-key']) {
+        sshagent(credentials: ['app-host-creds']) {
           sh '''
-            ssh -o StrictHostKeyChecking=no ubuntu@$APP_HOST '
-              aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO &&
-              docker rm -f $CONTAINER_NAME || true &&
-              docker pull $ECR_REPO:latest &&
-              docker run -d --name $CONTAINER_NAME -p $PORT:80 $ECR_REPO:latest
+            ssh -o StrictHostKeyChecking=no $APP_HOST '
+              docker pull $IMAGE_NAME &&
+              docker stop $CONTAINER_NAME || true &&
+              docker rm $CONTAINER_NAME || true &&
+              docker run -d --name $CONTAINER_NAME -p 80:80 $IMAGE_NAME
             '
           '''
         }
@@ -47,3 +55,4 @@ pipeline {
     }
   }
 }
+
