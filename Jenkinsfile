@@ -40,17 +40,17 @@ pipeline {
     }
 
     stage('Deploy to App Host') {
-      steps {
-        sshagent(credentials: ['app-host-key']) {
-          sh """
-            ssh -o StrictHostKeyChecking=no $APP_HOST '
-              docker pull $IMAGE_NAME &&
-              docker stop $CONTAINER_NAME || true &&
-              docker rm $CONTAINER_NAME || true &&
-              docker run -d --name $CONTAINER_NAME -p 80:80 $IMAGE_NAME
-            '
-          """
-        }
+  steps {
+    sshagent(credentials: ['app-host-key']) {
+      sh """
+        ssh -o StrictHostKeyChecking=no $APP_HOST '
+          docker pull $IMAGE_NAME &&
+          docker stop $CONTAINER_NAME || true &&
+          docker rm $CONTAINER_NAME || true &&
+          docker run -d --name $CONTAINER_NAME -p 80:80 $IMAGE_NAME gunicorn app:application -b 0.0.0.0:80
+        '
+      """
+       }
       }
     }
   }
