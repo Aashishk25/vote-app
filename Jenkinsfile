@@ -41,7 +41,7 @@ pipeline {
 
     stage('Deploy to App Host') {
       steps {
-        sshagent(credentials: ['app-host-creds']) {
+        sshagent(credentials: ['app-host-key']) {
           sh """
             ssh -o StrictHostKeyChecking=no $APP_HOST '
               docker pull $IMAGE_NAME &&
